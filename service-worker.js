@@ -7,7 +7,8 @@ self.addEventListener('install', e => {
         '/manifest.json',
         '/service-worker.js',
         '/icon-192.png',
-        '/icon-512.png'
+        '/icon-512.png',
+        '/https://images.seeklogo.com/logo-png/30/2/positivo-logo-png_seeklogo-306133.png'
       ]);
     })
   );
