@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>POSITECH - Consulta de Upgrade</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#000000">
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-image: url('https://i.pinimg.com/originals/88/15/63/881563d6444b370fa4ceea0c3183bb4c.gif');
+      background-size: cover;
+      background-attachment: fixed;
+      background-position: center;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.2);
+    }
+    h2, h3 {
+      text-align: center;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .form-group input[type="text"],
+    .form-group button {
+      max-width: 400px;
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    button {
+      background-color: #0b0b0c;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #005fa3;
+    }
+    .result {
+      margin-top: 20px;
+      font-size: 18px;
+      text-align: center;
+      font-weight: bold;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 30px;
+      word-break: break-word;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #020303;
+      color: white;
+    }
+    @media screen and (max-width: 600px) {
+      .container {
+        padding: 20px;
+      }
+      h2, h3 {
+        font-size: 20px;
+      }
+      input, button {
+        font-size: 14px;
+        padding: 8px;
+      }
+      table, th, td {
+        font-size: 12px;
+        padding: 6px;
+      }
+      .result {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Consulta de Upgrade</h2>
+  <div class="form-group">
+    <input type="text" id="serialInput" placeholder="Digite o número de série do aparelho">
+    <button onclick="verificarUpgrade()">Consultar</button>
+  </div>
+  <div id="resultado" class="result"></div>
+
+  <hr>
+
+  <h3>Adicionar Aparelho com Upgrade</h3>
+  <div class="form-group">
+    <input type="text" id="novoSerialInput" placeholder="Número de série">
+    <input type="text" id="novoCieInput" placeholder="Número do CIE">
+    <button onclick="adicionarUpgrade()">Adicionar</button>
+  </div>
+
+  <h3>Aparelhos com Upgrade</h3>
+  <table id="tabelaExport">
+    <thead>
+      <tr>
+        <th>CIE</th>
+        <th>Data</th>
+        <th>Número de Série</th>
+      </tr>
+    </thead>
+    <tbody id="tabelaAparelhos"></tbody>
+  </table>
+
+  <div class="form-group">
+    <button onclick="exportarParaExcel()">⬇️ Exportar para Excel</button>
+  </div>
+</div>
+
+<script>
+  let aparelhosComUpgrade = JSON.parse(localStorage.getItem('upgrades')) || [
+    { cie: '4714', serial: '4A9855XST', data: '04/07/2025' },
+    { cie: '4714', serial: '4A9567C69', data: '04/07/2025' },
+    { cie: '900035', serial: '4AB11JJ1E', data: '04/07/2025' },
+    { cie: '47909', serial: '4AF17XX3A', data: '04/07/2025' },
+    { cie: '23619', serial: '4AB618C5S', data: '04/07/2025' },
+  ];
+
+  const tabelaBody = document.getElementById('tabelaAparelhos');
+  const resultado = document.getElementById('resultado');
+
+  function salvarLocal() {
+    localStorage.setItem('upgrades', JSON.stringify(aparelhosComUpgrade));
+  }
+
+  function renderTabela() {
+    tabelaBody.innerHTML = "";
+    aparelhosComUpgrade.forEach(aparelho => {
+      const row = `<tr><td>${aparelho.cie}</td><td>${aparelho.data}</td><td>${aparelho.serial}</td></tr>`;
+      tabelaBody.insertAdjacentHTML('beforeend', row);
+    });
+  }
+
+  function dataAtual() {
+    const hoje = new Date();
+    return hoje.toLocaleDateString('pt-BR');
+  }
+
+  function validarFormato(serial) {
+    return /^[A-Z0-9]{9}$/.test(serial);
+  }
+
+  function verificarUpgrade() {
+    const input = document.getElementById('serialInput').value.trim().toUpperCase();
+    if (!validarFormato(input)) {
+      resultado.textContent = 'Formato inválido. Use 9 caracteres alfanuméricos.';
+      resultado.style.color = 'orange';
+      return;
+    }
+    const encontrado = aparelhosComUpgrade.find(a => a.serial === input);
+    if (encontrado) {
+      resultado.textContent = `✅ Aparelho com upgrade em ${encontrado.data} (CIE ${encontrado.cie})`;
+      resultado.style.color = 'green';
+    } else {
+      resultado.textContent = '❌ Aparelho não encontrado.';
+      resultado.style.color = 'red';
+    }
+  }
+
+  function adicionarUpgrade() {
+    const novoSerial = document.getElementById('novoSerialInput').value.trim().toUpperCase();
+    const novoCie = document.getElementById('novoCieInput').value.trim();
+    if (!validarFormato(novoSerial) || novoCie === '') {
+      alert('Preencha corretamente: 9 caracteres no serial e um número no CIE.');
+      return;
+    }
+    if (aparelhosComUpgrade.some(a => a.serial === novoSerial)) {
+      alert('Este número de série já foi cadastrado.');
+      return;
+    }
+    aparelhosComUpgrade.push({ cie: novoCie, serial: novoSerial, data: dataAtual() });
+    salvarLocal();
+    renderTabela();
+    alert('Aparelho adicionado com sucesso!');
+  }
+
+  function exportarParaExcel() {
+    const tabela = document.querySelector("#tabelaExport");
+    const html = tabela.outerHTML;
+    const nomeArquivo = `aparelhos_upgrade_${dataAtual().replaceAll('/', '-')}.xls`;
+    const blob = new Blob(["\ufeff", html], { type: "application/vnd.ms-excel" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = nomeArquivo;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  renderTabela();
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js').then(() => console.log('PWA pronto'));
+  }
+</script>
+</body>
+</html>
